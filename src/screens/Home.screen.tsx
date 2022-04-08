@@ -25,12 +25,24 @@ const STORIES_QUERY = gql`
 `;
 
 export const HomeScreen = () => {
-  const [{ data, error, fetching }] = useQuery<
+  const [{ data, error, fetching }, refetch] = useQuery<
     AllStoriesQuery,
     AllStoriesQueryVariables
   >({ query: STORIES_QUERY });
+  const [isRefetching, setIsRefetching] = React.useState(false);
 
-  if (fetching) {
+  const handleRefetch = React.useCallback(() => {
+    setIsRefetching(true);
+    refetch({ requestPolicy: 'network-only' });
+  }, [refetch]);
+
+  React.useEffect(() => {
+    if (!fetching) {
+      setIsRefetching(false);
+    }
+  }, [fetching]);
+
+  if (fetching && !isRefetching) {
     return (
       <View style={styles.container}>
         <ActivityIndicator color="grey" />
@@ -48,6 +60,8 @@ export const HomeScreen = () => {
 
   return (
     <FlatList
+      refreshing={isRefetching}
+      onRefresh={handleRefetch}
       contentContainerStyle={styles.flatListContainer}
       style={styles.flatList}
       data={data?.stories}

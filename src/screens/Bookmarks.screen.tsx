@@ -28,10 +28,23 @@ const BOOKMARKS_QUERY = gql`
 `;
 
 export const BookmarksScreen = () => {
-  const [{ data, error, fetching }] = useQuery<
+  const [{ data, error, fetching }, refetch] = useQuery<
     AllBookmarksQuery,
     AllBookmarksQueryVariables
   >({ query: BOOKMARKS_QUERY });
+
+  const [isRefetching, setIsRefetching] = React.useState(false);
+
+  const handleRefetch = React.useCallback(() => {
+    setIsRefetching(true);
+    refetch({ requestPolicy: 'network-only' });
+  }, [refetch]);
+
+  React.useEffect(() => {
+    if (!fetching) {
+      setIsRefetching(false);
+    }
+  }, [fetching]);
 
   if (fetching) {
     return (
@@ -59,6 +72,8 @@ export const BookmarksScreen = () => {
 
   return (
     <FlatList
+      refreshing={isRefetching}
+      onRefresh={handleRefetch}
       contentContainerStyle={styles.flatListContainer}
       style={styles.flatList}
       data={data.bookmarks}
