@@ -59,3 +59,7 @@ buck-out/
 # Ruby / CocoaPods
 /ios/Pods/
 /vendor/bundle/
+
+# Generated files
+src/graphql/__generated__/*
+!src/graphql/__generated__/.gitkeep

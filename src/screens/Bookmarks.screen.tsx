@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { gql, useQuery } from 'urql';
 
 const BOOKMARKS_QUERY = gql`
@@ -21,7 +15,7 @@ const BOOKMARKS_QUERY = gql`
 `;
 
 export const BookmarksScreen = () => {
-  const [{ data, error, fetching }] = useQuery({ query: BOOKMARKS_QUERY });
+  const [{ error, fetching }] = useQuery({ query: BOOKMARKS_QUERY });
 
   if (fetching) {
     return (
