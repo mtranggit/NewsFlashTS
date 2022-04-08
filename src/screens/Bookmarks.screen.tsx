@@ -40,20 +40,25 @@ export const BookmarksScreen = () => {
   }
 
   return (
-    <FlatList
-      contentContainerStyle={styles.flatListContainer}
-      style={styles.flatList}
-      data={data.stories}
-      keyExtractor={item => item.id}
-      ItemSeparatorComponent={() => <View style={styles.separator} />}
-      renderItem={({ item }) => (
-        <View>
-          <Text style={styles.title}>{item.title}</Text>
-          <Text style={styles.summary}>{item.summary}</Text>
-        </View>
-      )}
-    />
+    <View style={styles.container}>
+      <Text>Bookmarks</Text>
+    </View>
   );
+  // return (
+  //   <FlatList
+  //     contentContainerStyle={styles.flatListContainer}
+  //     style={styles.flatList}
+  //     data={data.stories}
+  //     keyExtractor={item => item.id}
+  //     ItemSeparatorComponent={() => <View style={styles.separator} />}
+  //     renderItem={({ item }) => (
+  //       <View>
+  //         <Text style={styles.title}>{item.title}</Text>
+  //         <Text style={styles.summary}>{item.summary}</Text>
+  //       </View>
+  //     )}
+  //   />
+  // );
 };
 
 const styles = StyleSheet.create({
