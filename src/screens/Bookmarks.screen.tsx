@@ -1,21 +1,37 @@
 import React from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  FlatList,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { gql, useQuery } from 'urql';
+import { Story } from '../components/Story';
+import { StorySummaryFields } from '../graphql/fragments';
+import {
+  AllBookmarksQuery,
+  AllBookmarksQueryVariables,
+} from '../graphql/__generated__/operationTypes';
 
 const BOOKMARKS_QUERY = gql`
   query AllBookmarks {
     bookmarks {
       id
       story {
-        id
-        title
+        ...StorySummaryFields
       }
     }
   }
+
+  ${StorySummaryFields}
 `;
 
 export const BookmarksScreen = () => {
-  const [{ error, fetching }] = useQuery({ query: BOOKMARKS_QUERY });
+  const [{ data, error, fetching }] = useQuery<
+    AllBookmarksQuery,
+    AllBookmarksQueryVariables
+  >({ query: BOOKMARKS_QUERY });
 
   if (fetching) {
     return (
@@ -33,26 +49,24 @@ export const BookmarksScreen = () => {
     );
   }
 
+  if (!data?.bookmarks) {
+    return (
+      <View style={styles.container}>
+        <Text>No bookmarks found</Text>
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.container}>
-      <Text>Bookmarks</Text>
-    </View>
+    <FlatList
+      contentContainerStyle={styles.flatListContainer}
+      style={styles.flatList}
+      data={data.bookmarks}
+      keyExtractor={item => item.id}
+      ItemSeparatorComponent={() => <View style={styles.separator} />}
+      renderItem={({ item }) => <Story item={item.story} />}
+    />
   );
-  // return (
-  //   <FlatList
-  //     contentContainerStyle={styles.flatListContainer}
-  //     style={styles.flatList}
-  //     data={data.stories}
-  //     keyExtractor={item => item.id}
-  //     ItemSeparatorComponent={() => <View style={styles.separator} />}
-  //     renderItem={({ item }) => (
-  //       <View>
-  //         <Text style={styles.title}>{item.title}</Text>
-  //         <Text style={styles.summary}>{item.summary}</Text>
-  //       </View>
-  //     )}
-  //   />
-  // );
 };
 
 const styles = StyleSheet.create({
