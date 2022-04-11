@@ -14,7 +14,7 @@ import {
   AllBookmarksQueryVariables,
 } from '../graphql/__generated__/operationTypes';
 
-const BOOKMARKS_QUERY = gql`
+export const BOOKMARKS_QUERY = gql`
   query AllBookmarks {
     bookmarks {
       id
@@ -79,7 +79,7 @@ export const BookmarksScreen = () => {
       data={data.bookmarks}
       keyExtractor={item => item.id}
       ItemSeparatorComponent={() => <View style={styles.separator} />}
-      renderItem={({ item }) => <Story item={item.story} />}
+      renderItem={({ item }) => <Story item={item.story} cta="remove" />}
     />
   );
 };

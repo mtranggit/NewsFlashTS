@@ -14,7 +14,7 @@ import {
 import { StorySummaryFields } from '../graphql/fragments';
 import { Story } from '../components/Story';
 
-const STORIES_QUERY = gql`
+export const STORIES_QUERY = gql`
   query AllStories {
     stories {
       ...StorySummaryFields
@@ -67,7 +67,7 @@ export const HomeScreen = () => {
       data={data?.stories}
       keyExtractor={item => item.id}
       ItemSeparatorComponent={() => <View style={styles.separator} />}
-      renderItem={({ item }) => <Story item={item} />}
+      renderItem={({ item }) => <Story item={item} cta="add" />}
     />
   );
 };
