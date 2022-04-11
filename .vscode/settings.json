@@ -3,8 +3,11 @@
     "Addbookmark",
     "codegen",
     "dedup",
+    "graphcache",
+    "netinfo",
     "newsflashts",
     "Pressable",
-    "urql"
+    "urql",
+    "wonka"
   ]
 }

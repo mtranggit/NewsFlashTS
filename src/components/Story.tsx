@@ -7,6 +7,7 @@ import {
   Text,
   View,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { gql, useMutation } from 'urql';
 import { StorySummaryFields } from '../graphql/fragments';
@@ -53,6 +54,26 @@ export const Story: React.FC<{
     RemoveBookmarkMutation,
     RemoveBookmarkMutationVariables
   >(REMOVE_BOOKMARK_MUTATION);
+
+  const handleAddBookmark = React.useCallback(async () => {
+    const result = await addBookmark({ storyId: item.id });
+    if (result?.error?.message.includes('You are offline!')) {
+      Alert.alert(
+        'You are offline!',
+        'Please check your data connection before adding this story to your bookmark.',
+      );
+    }
+  }, [addBookmark, item.id]);
+
+  const handleRemoveBookmark = React.useCallback(async () => {
+    const result = await removeBookmark({ bookmarkId: item.bookmarkId! });
+    if (result?.error?.message.includes('You are offline!')) {
+      Alert.alert(
+        'You are offline!',
+        'Please check your data connection before removing this story from your bookmark.',
+      );
+    }
+  }, [removeBookmark, item.bookmarkId]);
   return (
     <Pressable
       onPress={() =>
@@ -66,12 +87,11 @@ export const Story: React.FC<{
           {item.title} {item.bookmarkId ? '🔖' : ''}
         </Text>
         {!item.bookmarkId && !isAddingBookmark && cta === 'add' ? (
-          <Pressable onPress={() => addBookmark({ storyId: item.id })}>
+          <Pressable onPress={handleAddBookmark}>
             <Text>Add Bookmark</Text>
           </Pressable>
         ) : item.bookmarkId && !isRemovingBookmark && cta === 'remove' ? (
-          <Pressable
-            onPress={() => removeBookmark({ bookmarkId: item.bookmarkId! })}>
+          <Pressable onPress={handleRemoveBookmark}>
             <Text>Remove Bookmark</Text>
           </Pressable>
         ) : null}

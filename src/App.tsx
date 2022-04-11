@@ -1,28 +1,91 @@
 import { NavigationContainer } from '@react-navigation/native';
 import React from 'react';
 import { StatusBar } from 'react-native';
-import { cacheExchange } from '@urql/exchange-graphcache';
+import { offlineExchange } from '@urql/exchange-graphcache';
+// import { cacheExchange } from '@urql/exchange-graphcache';
 import {
   createClient,
   dedupExchange,
+  Exchange,
   fetchExchange,
   gql,
+  makeErrorResult,
   Provider as UrqlProvider,
 } from 'urql';
 import { RootNavigator } from './screens/Root.navigator';
 import schema from './graphql/graphql.schema.json';
 import {
-  AddbookmarkMutation,
+  AddBookmarkMutation,
   AllBookmarksQuery,
   RemoveBookmarkMutation,
 } from './graphql/__generated__/operationTypes';
 import { BOOKMARKS_QUERY } from './screens/Bookmarks.screen';
+import NetInfo from '@react-native-community/netinfo';
+// import { useNetInfo } from '@react-native-community/netinfo';
+// import { AppOfflinePage } from './components/AppOfflinePage';
+import { AppOfflineMessage } from './components/AppOfflineMessage';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { makeAsyncStorage } from '@urql/storage-rn';
+import { share, pipe, filter, map, merge } from 'wonka';
+
+/**
+ * There are 3 levels of offline support:
+ *
+ * 0 - no support <-= everyone starts with this
+ * 1 - blocking notification <-= we will add this
+ * 2 - read-only offline support <-= we will add this
+ * 3 - read-write offline support <-= not needed for most apps
+ *
+ */
+
+let disconnect: any;
+
+const offlineMutationExchange: () => Exchange = () => {
+  let connected = true;
+
+  if (disconnect) {
+    disconnect();
+    disconnect = undefined;
+  }
+
+  disconnect = NetInfo.addEventListener(state => {
+    connected = state.isConnected === true;
+  });
+
+  return ({ forward }) => {
+    return ops$ => {
+      const shared = pipe(ops$, share);
+      // split operation into 2 groups
+      // mutations when app is offline
+      const offlineMutations = pipe(
+        shared,
+        filter(op => op.kind === 'mutation' && !connected),
+        map(op => makeErrorResult(op, new Error('You are offline!'))),
+      );
+
+      const rest = pipe(
+        shared,
+        filter(
+          op => op.kind !== 'mutation' || (op.kind === 'mutation' && connected),
+        ),
+      );
+      return merge([forward(rest), offlineMutations]);
+      // return forward(ops$);
+    };
+  };
+};
+const storage = makeAsyncStorage({
+  dataKey: 'my-app-data',
+  metadataKey: 'my-app-meta-data',
+  maxAge: 5, // 5 days
+});
 
 const client = createClient({
   url: 'http://localhost:3000/graphql',
   exchanges: [
     dedupExchange,
-    cacheExchange({
+    offlineExchange({
+      storage,
       schema: schema as any,
       resolvers: {
         Query: {
@@ -31,7 +94,7 @@ const client = createClient({
       },
       updates: {
         Mutation: {
-          addBookmark: (result: AddbookmarkMutation, args, cache) => {
+          addBookmark: (result: AddBookmarkMutation, args, cache) => {
             if (result.addBookmark) {
               cache.updateQuery(
                 {
@@ -82,17 +145,29 @@ const client = createClient({
         },
       },
     }),
+    offlineMutationExchange(),
     fetchExchange,
   ],
 });
 
 export const App = () => {
+  const { isConnected } = NetInfo.useNetInfo();
+
+  // if (isConnected === false) {
+  //   return <AppOfflinePage />;
+  // }
+
+  console.log('isConnected', isConnected);
+
   return (
-    <UrqlProvider value={client}>
-      <NavigationContainer>
-        <StatusBar hidden />
-        <RootNavigator />
-      </NavigationContainer>
-    </UrqlProvider>
+    <SafeAreaProvider>
+      <UrqlProvider value={client}>
+        <NavigationContainer>
+          <StatusBar hidden />
+          <RootNavigator />
+        </NavigationContainer>
+        {isConnected === false ? <AppOfflineMessage /> : null}
+      </UrqlProvider>
+    </SafeAreaProvider>
   );
 };
